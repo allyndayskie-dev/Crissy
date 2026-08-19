@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>For You</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Parisienne&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+
+  /* ============================================================
+     EDIT YOUR LETTER HERE — everything you need to personalize
+     is between the START / END markers below.
+  ============================================================ */
+
+  :root{
+    --paper:#fdf6ee;
+    --paper-shadow:#e8d9c5;
+    --plum:#3b1f2b;
+    --plum-soft:#6b4457;
+    --rose:#c97b84;
+    --rose-deep:#a85566;
+    --gold:#c9a15a;
+    --envelope:#7a3b4a;
+    --envelope-dark:#5e2c39;
+    --envelope-flap:#8f4757;
+    --blush-bg-1:#f3e3de;
+    --blush-bg-2:#e9d3d8;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; min-height:100%;
+    background: radial-gradient(ellipse at top, var(--blush-bg-1), var(--blush-bg-2) 70%);
+    font-family:'EB Garamond', serif;
+    color:var(--plum);
+    overflow-x:hidden;
+  }
+
+  /* ---------- ambient floating hearts ---------- */
+  .ambient{
+    position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden;
+  }
+  .ambient span{
+    position:absolute; bottom:-10%;
+    opacity:0.35;
+    color:var(--rose-deep);
+    font-size:14px;
+    animation:drift linear infinite;
+  }
+  @keyframes drift{
+    0%{ transform:translateY(0) translateX(0) rotate(0deg); opacity:0;}
+    10%{opacity:0.35;}
+    90%{opacity:0.25;}
+    100%{ transform:translateY(-115vh) translateX(20px) rotate(25deg); opacity:0;}
+  }
+
+  .stage{
+    position:relative; z-index:1;
+    min-height:100vh;
+    display:flex; align-items:center; justify-content:center;
+    padding:32px 18px;
+  }
+
+  /* ================= ENVELOPE ================= */
+  .envelope-wrap{
+    position:relative;
+    width:100%; max-width:340px;
+    perspective:1400px;
+  }
+  .envelope-wrap.hidden{ display:none; }
+
+  .prompt{
+    text-align:center;
+    font-family:'Cormorant Garamond', serif;
+    font-style:italic;
+    font-size:17px;
+    color:var(--plum-soft);
+    margin-bottom:22px;
+    letter-spacing:0.02em;
+    opacity:0;
+    animation:fadeUp 1.1s ease-out 0.3s forwards;
+  }
+
+  @keyframes fadeUp{
+    from{opacity:0; transform:translateY(10px);}
+    to{opacity:1; transform:translateY(0);}
+  }
+
+  .envelope{
+    position:relative;
+    width:100%;
+    aspect-ratio: 3 / 2;
+    cursor:pointer;
+    opacity:0;
+    animation:fadeUp 1.1s ease-out 0.15s forwards;
+  }
+
+  .env-body{
+    position:absolute; inset:0;
+    background:linear-gradient(160deg, var(--envelope), var(--envelope-dark));
+    border-radius:6px;
+    box-shadow:
+      0 18px 40px -12px rgba(59,31,43,0.45),
+      0 4px 10px rgba(59,31,43,0.25);
+    overflow:hidden;
+  }
+  .env-body::before{
+    /* subtle paper texture lines */
+    content:"";
+    position:absolute; inset:0;
+    background:
+      linear-gradient(115deg, rgba(255,255,255,0.06) 0%, transparent 40%);
+  }
+  .env-shadow-fold{
+    position:absolute; left:0; right:0; bottom:0; top:38%;
+    background:linear-gradient(160deg, rgba(0,0,0,0.12), rgba(0,0,0,0) 60%);
+    clip-path: polygon(0 0, 50% 46%, 100% 0, 100% 100%, 0 100%);
+  }
+  .env-side-left, .env-side-right{
+    position:absolute; top:0; bottom:0; width:52%;
+    background:linear-gradient(180deg, rgba(255,255,255,0.05), rgba(0,0,0,0.08));
+  }
+  .env-side-left{ left:0; clip-path:polygon(0 0,0 100%,100% 100%); }
+  .env-side-right{ right:0; clip-path:polygon(100% 0,0 100%,100% 100%); }
+
+  .env-flap{
+    position:absolute; top:0; left:0; right:0; height:58%;
+    background:linear-gradient(160deg, var(--envelope-flap), var(--envelope));
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+    transform-origin: top center;
+    transform-style:preserve-3d;
+    transition: transform 1.1s cubic-bezier(.65,0,.35,1);
+    z-index:5;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+  }
+
+  .seal{
+    position:absolute;
+    top:50%; left:50%;
+    transform:translate(-50%,-50%);
+    width:58px; height:58px;
+    border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #d68a95, var(--rose-deep) 55%, #8f3f4f 100%);
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 4px 10px rgba(0,0,0,0.35), inset 0 -3px 6px rgba(0,0,0,0.25), inset 0 2px 4px rgba(255,255,255,0.25);
+    z-index:6;
+    transition: transform 0.4s ease, opacity 0.5s ease;
+  }
+  .seal svg{ width:26px; height:26px; fill:#fdf1e8; opacity:0.92; }
+  .envelope:active .seal{ transform:translate(-50%,-50%) scale(0.94); }
+
+  .env-hint{
+    position:absolute; bottom:-34px; left:0; right:0;
+    text-align:center;
+    font-family:'Cormorant Garamond', serif;
+    font-size:13px; letter-spacing:0.14em; text-transform:uppercase;
+    color:var(--plum-soft);
+    opacity:0.7;
+    animation:pulseHint 2.4s ease-in-out infinite;
+  }
+  @keyframes pulseHint{
+    0%,100%{opacity:0.45;}
+    50%{opacity:0.85;}
+  }
+
+  /* opened state */
+  .envelope.opened .env-flap{
+    transform: rotateX(180deg);
+    z-index:2;
+  }
+  .envelope.opened .seal{
+    opacity:0;
+    transform:translate(-50%,-50%) scale(0.6);
+  }
+
+  .letter-peek{
+    position:absolute; left:6%; right:6%; bottom:6%;
+    top:14%;
+    background:var(--paper);
+    border-radius:4px 4px 2px 2px;
+    box-shadow:0 -2px 8px rgba(0,0,0,0.08);
+    transform: translateY(14%);
+    transition: transform 0.9s cubic-bezier(.34,1.2,.5,1) 0.35s;
+    z-index:3;
+  }
+  .envelope.opened .letter-peek{
+    transform: translateY(-38%);
+  }
+
+  /* ================= LETTER VIEW ================= */
+  .letter-wrap{
+    display:none;
+    width:100%; max-width:420px;
+    opacity:0;
+    transform:translateY(24px) scale(0.98);
+  }
+  .letter-wrap.show{
+    display:block;
+    animation: letterIn 0.9s cubic-bezier(.22,1,.36,1) forwards;
+  }
+  @keyframes letterIn{
+    to{opacity:1; transform:translateY(0) scale(1);}
+  }
+
+  .paper{
+    position:relative;
+    background:
+      linear-gradient(var(--paper), var(--paper)) padding-box,
+      var(--paper);
+    border-radius:3px;
+    padding:44px 30px 40px;
+    box-shadow:
+      0 30px 60px -20px rgba(59,31,43,0.35),
+      0 8px 20px rgba(59,31,43,0.15);
+  }
+  .paper::before{
+    content:"";
+    position:absolute; inset:0;
+    border-radius:3px;
+    background-image: repeating-linear-gradient(
+      var(--paper) 0px, var(--paper) 33px, rgba(59,31,43,0.05) 34px
+    );
+    opacity:0.5;
+    pointer-events:none;
+  }
+
+  .eyebrow{
+    position:relative;
+    text-align:center;
+    font-family:'Cormorant Garamond', serif;
+    font-style:italic;
+    font-size:13px;
+    letter-spacing:0.22em;
+    text-transform:uppercase;
+    color:var(--rose-deep);
+    margin-bottom:6px;
+  }
+
+  .to-line{
+    position:relative;
+    text-align:center;
+    font-family:'Parisienne', cursive;
+    font-size:34px;
+    color:var(--plum);
+    margin:0 0 26px;
+    line-height:1.1;
+  }
+
+  .divider{
+    position:relative;
+    display:flex; align-items:center; justify-content:center;
+    gap:10px;
+    margin:0 0 28px;
+    color:var(--gold);
+  }
+  .divider::before, .divider::after{
+    content:"";
+    height:1px; width:38px;
+    background:linear-gradient(90deg, transparent, var(--gold));
+  }
+  .divider::after{ background:linear-gradient(90deg, var(--gold), transparent); }
+  .divider svg{ width:14px; height:14px; fill:var(--gold); }
+
+  .body-text{
+    position:relative;
+    font-family:'Cormorant Garamond', serif;
+    font-size:18.5px;
+    line-height:1.85;
+    color:var(--plum);
+  }
+  .body-text p{ margin:0 0 18px; }
+  .body-text p:first-of-type::first-letter{
+    font-family:'Parisienne', cursive;
+    font-size:52px;
+    color:var(--rose-deep);
+    float:left;
+    line-height:0.75;
+    padding:6px 8px 0 0;
+  }
+
+  .signoff{
+    position:relative;
+    margin-top:30px;
+    text-align:right;
+  }
+  .signoff .line1{
+    font-family:'Cormorant Garamond', serif;
+    font-style:italic;
+    font-size:16px;
+    color:var(--plum-soft);
+    margin:0 0 2px;
+  }
+  .signoff .name{
+    font-family:'Parisienne', cursive;
+    font-size:38px;
+    color:var(--rose-deep);
+    margin:0;
+  }
+
+  .stamp{
+    position:absolute;
+    top:20px; right:22px;
+    width:46px; height:56px;
+    border:2px dashed rgba(201,161,90,0.55);
+    border-radius:2px;
+    display:flex; align-items:center; justify-content:center;
+    transform:rotate(6deg);
+    opacity:0.8;
+  }
+  .stamp svg{ width:22px; height:22px; fill:var(--rose); opacity:0.75; }
+
+  .footer-note{
+    text-align:center;
+    margin-top:22px;
+    font-family:'Cormorant Garamond', serif;
+    font-style:italic;
+    font-size:13px;
+    color:var(--plum-soft);
+    opacity:0;
+    animation:fadeUp 1s ease-out 0.6s forwards;
+  }
+
+  .replay{
+    display:block;
+    margin:14px auto 0;
+    background:none; border:none;
+    font-family:'EB Garamond', serif;
+    font-size:13px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--rose-deep);
+    text-decoration:underline;
+    text-underline-offset:3px;
+    cursor:pointer;
+    opacity:0.75;
+    padding:8px;
+  }
+  .replay:hover{ opacity:1; }
+
+  @media (max-width:360px){
+    .body-text{ font-size:17.5px; }
+    .to-line{ font-size:30px; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.01ms !important; transition-duration:0.01ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="ambient" id="ambient"></div>
+
+<div class="stage">
+
+  <!-- ============= ENVELOPE (tap to open) ============= -->
+  <div class="envelope-wrap" id="envelopeWrap">
+    <p class="prompt">a letter, sealed just for you</p>
+    <div class="envelope" id="envelope" role="button" tabindex="0" aria-label="Open the letter">
+      <div class="env-body">
+        <div class="env-side-left"></div>
+        <div class="env-side-right"></div>
+        <div class="env-shadow-fold"></div>
+      </div>
+      <div class="letter-peek"></div>
+      <div class="env-flap">
+        <div class="seal">
+          <svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-10-9.3C.5 8 2.4 4.5 6 4.5c2.1 0 3.6 1.2 6 3.6 2.4-2.4 3.9-3.6 6-3.6 3.6 0 5.5 3.5 4 7.2C19.5 16.4 12 21 12 21z"/></svg>
+        </div>
+      </div>
+      <p class="env-hint">tap to open</p>
+    </div>
+  </div>
+
+  <!-- ============= LETTER ============= -->
+  <div class="letter-wrap" id="letterWrap">
+    <div class="paper">
+      <div class="stamp">
+        <svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-10-9.3C.5 8 2.4 4.5 6 4.5c2.1 0 3.6 1.2 6 3.6 2.4-2.4 3.9-3.6 6-3.6 3.6 0 5.5 3.5 4 7.2C19.5 16.4 12 21 12 21z"/></svg>
+      </div>
+
+      <p class="eyebrow">a few words, for you</p>
+      <!-- ===== EDIT: her name ===== -->
+      <h1 class="to-line">Hi Crissy,</h1>
+
+      <div class="divider">
+        <svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-10-9.3C.5 8 2.4 4.5 6 4.5c2.1 0 3.6 1.2 6 3.6 2.4-2.4 3.9-3.6 6-3.6 3.6 0 5.5 3.5 4 7.2C19.5 16.4 12 21 12 21z"/></svg>
+      </div>
+
+      <!-- ===== EDIT: your letter ===== -->
+      <div class="body-text">
+        <p>I don't know how to say this, I've been thinking about this for weeks and months na. I feel like I am not worthy of your love, di ako nakaka-sabay sayo, di ako nakakapag-chat ng mabilis, puro nalang ako "HAHAHA", and di ako nakaka-hanap ng topic to continue our conversation. I want to express this para malaman mo ko.</p>
+        <p>The more I fall for you, the more na mas sumasakit yung impact na nararamdaman ko. I'm scared, the more na na a-attach ako sayo, alam ko na mas lalong sumasakit and nararamdaman ko pag nawala ka.</p>
+        <p>To be honest, I overthink a lot. What if may nagustuhan kang iba? Well okay lang sakin, you're free naman, you're free to choose, but I won't compete, di ko gagawing option ang aking sarili, cause when you love that person why do you still need an option?</p>
+        <p>How can I handle a relationship? Di ko alam paano mag-start and continue ng conversation, sumasabay lang ako para lang talaga may mapag-usapan pa tayo. And paano kita mapapasaya? How can I make you happy kahit magkalayo tayo?</p>
+        <p>I'm scared na what if sa una lang pala talaga nagiging masaya? I can stay always and forever, I can stay at your lowest, but will you? I feared na magsawa ka sakin at the end of the time. I'm sorry you met this weakling human, but I will try my best to protect and make you happy.</p>
+        <p>I always imagine when I sleep na what if maglalayo yung relasyon natin, and every time I imagine it, I feel like winawasak at dinudurog nito ang puso ko — yes, I feel heartache every time I imagine negative things na will happen between us. I talked to myself na if ever mangyari ang ayaw kong mangyari sa ating dalawa, anong gagawin ko? Ang sakit na araw-araw na ganun nalang yung nasa isipan ko. Naiimagine ko rin ngayon na what if pag sinend ko sayo 'to, pagtatawanan lang ako ng mga kaibigan mo.</p>
+        <p>I always loved you Crissy, every time, every hour, and every second. If it is not you, then there's no one. I loved you even though nag-late reply ako, di ko nababasa agad, even though di tayo nag-uusap ng matagal.</p>
+        <p>Please accept my favor Crissy. Wag kang magpanggap sa kung ano man, please mag-open up ka sakin, kahit ano, kahit masaktan man ako, basta tell me what you felt. I can accept any consequences for loving you. Please don't make me overthink ka, tell me if galit ka, tell me if you're sad or disappointed sa something. I'm happy na mag-sabi ka ng mga problema mo sakin, I'm happy na I can be by your side.</p>
+        <p>I promised myself na gagawa ako ng letters for you every end of the month, pero di ko nagawa, and I am so very guilty about it. Na-busy ako, nakalimutan kong bigyan ka ng oras, and that is the stupidest thing na ginawa ko. I'm sorry for that Crissy, nawalan ako ng time sa social media, and especially for you.</p>
+        <p>This August I want you to read this, I want you to know what I truly felt. Wag mong isipin na I'm doing this just for fun, I loved you Crissy, always. Maybe accept this as my end-of-July letter, HEHEHEHE.</p>
+        <p>I love you Crissyyyy, I love you till astronauts fully discover the universe.</p>
+      </div>
+
+      <div class="signoff">
+        <p class="line1">Always and forever,</p>
+        <!-- ===== EDIT: your name ===== -->
+        <p class="name">ALLYN</p>
+      </div>
+    </div>
+
+    <button class="replay" id="replayBtn">seal it again</button>
+    <p class="footer-note">made with love, just for you 🤍</p>
+  </div>
+
+</div>
+
+<script>
+  // ambient floating hearts
+  const ambient = document.getElementById('ambient');
+  const heartCount = 14;
+  for(let i=0;i<heartCount;i++){
+    const el = document.createElement('span');
+    el.textContent = '♥';
+    el.style.left = Math.random()*100 + '%';
+    el.style.fontSize = (10 + Math.random()*14) + 'px';
+    el.style.animationDuration = (10 + Math.random()*14) + 's';
+    el.style.animationDelay = (Math.random()*14) + 's';
+    ambient.appendChild(el);
+  }
+
+  const envelope = document.getElementById('envelope');
+  const envelopeWrap = document.getElementById('envelopeWrap');
+  const letterWrap = document.getElementById('letterWrap');
+  const replayBtn = document.getElementById('replayBtn');
+
+  function openEnvelope(){
+    if(envelope.classList.contains('opened')) return;
+    envelope.classList.add('opened');
+    setTimeout(()=>{
+      envelopeWrap.classList.add('hidden');
+      letterWrap.classList.add('show');
+    }, 950);
+  }
+
+  envelope.addEventListener('click', openEnvelope);
+  envelope.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openEnvelope(); }
+  });
+
+  replayBtn.addEventListener('click', ()=>{
+    letterWrap.classList.remove('show');
+    envelope.classList.remove('opened');
+    envelopeWrap.classList.remove('hidden');
+  });
+</script>
+
+</body>
+</html>
